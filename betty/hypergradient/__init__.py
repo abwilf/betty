@@ -9,9 +9,9 @@ from .reinforce import reinforce
 jvp_fn_mapping = {"darts": darts, "neumann": neumann, "cg": cg, "reinforce": reinforce}
 
 
-def get_grads(loss, path, retain_graph):
+def get_grads(loss, path, retain_graph, allow_unused):
     jvp = torch.autograd.grad(
-        loss, path[1].trainable_parameters(), retain_graph=retain_graph
+        loss, path[1].trainable_parameters(), retain_graph=retain_graph, allow_unused=allow_unused
     )
     for i in range(1, len(path) - 1):
         jvp_fn_type = path[i].config.type

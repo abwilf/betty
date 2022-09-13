@@ -24,24 +24,36 @@ def darts(vector, curr, prev):
     """
     config = curr.config
     R = config.darts_alpha
-    eps = R / to_vec(vector).norm()
+    eps = R / to_vec(list(filter(lambda elt: elt is not None, vector))).norm()
 
     # positive
     for p, v in zip(curr.trainable_parameters(), vector):
-        p.data.add_(v.data, alpha=eps)
+        if v is not None:
+            p.data.add_(v.data, alpha=eps)
     loss_p = curr.training_step_exec(curr.cur_batch)
-    grad_p = torch.autograd.grad(loss_p, prev.trainable_parameters())
+    grad_p = torch.autograd.grad(loss_p, prev.trainable_parameters(), allow_unused=True)
 
     # negative
     for p, v in zip(curr.trainable_parameters(), vector):
-        p.data.add_(v.data, alpha=-2 * eps)
+        if v is not None:
+            p.data.add_(v.data, alpha=-2 * eps)
     loss_n = curr.training_step_exec(curr.cur_batch)
-    grad_n = torch.autograd.grad(loss_n, prev.trainable_parameters())
+    grad_n = torch.autograd.grad(loss_n, prev.trainable_parameters(), allow_unused=True)
 
     # reverse weight change
     for p, v in zip(curr.trainable_parameters(), vector):
-        p.data.add(v.data, alpha=eps)
+        if v is not None:
+            p.data.add(v.data, alpha=eps)
 
-    implicit_grad = [(x - y).div_(2 * eps) for x, y in zip(grad_n, grad_p)]
+    def f(x,y):
+        if x is None and y is None:
+            return None
+        if x is None:
+            x = 0
+        if y is None:
+            y = 0
+        return (x - y).div_(2 * eps)
+    
+    implicit_grad = [f(x,y) for x, y in zip(grad_n, grad_p)]
 
     return implicit_grad

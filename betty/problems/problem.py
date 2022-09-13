@@ -460,7 +460,7 @@ class Problem:
         if self._config.first_order:
             for idx, path in enumerate(paths):
                 retain_graph_implicit = False if idx == len(paths) - 1 else True
-                grads = get_grads(loss, path, retain_graph_implicit)
+                grads = get_grads(loss, path, retain_graph_implicit, allow_unused=allow_unused)
                 self.set_grads(params, grads)
 
     def set_grads(self, params, grads):
